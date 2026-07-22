@@ -1,0 +1,81 @@
+name: Deploy Snowflake Objects
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "sql/**"
+      - ".github/workflows/deploy-snowflake.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.ref == 'refs/heads/main' && 'PROD' || 'DEV' }}
+    runs-on: ubuntu-latest
+
+    # GitHub Environment gates — configure protection rules in repo Settings > Environments
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+
+    env:
+      SF_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Snowflake CLI
+        run: pip install snowflake-cli-labs --quiet
+
+      # Write the RSA private key from GitHub Secrets to a temp file.
+      # The key is used by the admin connection (not the service user key).
+      - name: Write admin private key
+        run: |
+          echo "${{ secrets.SNOWFLAKE_ADMIN_PRIVATE_KEY }}" > /tmp/admin_rsa_key.p8
+          chmod 600 /tmp/admin_rsa_key.p8
+
+      # Build a minimal config.toml so `snow sql` can connect.
+      # All sensitive values come from GitHub Secrets — nothing is hard-coded.
+      - name: Configure Snowflake CLI connection
+        run: |
+          mkdir -p ~/.snowflake
+          cat > ~/.snowflake/config.toml << EOF
+          [connections.default]
+          account       = "${{ secrets.SNOWFLAKE_ACCOUNT }}"
+          user          = "${{ secrets.SNOWFLAKE_ADMIN_USER }}"
+          authenticator = "private_key"
+          private_key_path = "/tmp/admin_rsa_key.p8"
+          EOF
+          chmod 600 ~/.snowflake/config.toml
+
+      - name: Verify connection
+        run: snow connection test
+
+      # Run SQL files in order. Each file receives the target env as a variable.
+      # Step 07 additionally receives the service-user RSA public key from Secrets.
+      # Substitute {{ env | upper }} and {{ rsa_public_key }} placeholders before
+      # executing — avoids dependency on snow CLI's Jinja2 templating version.
+      - name: Deploy all SQL
+        run: |
+          RENDERED=$(mktemp --suffix=.sql)
+          cat sql/0*.sql > "$RENDERED"
+          sed -i "s/{{\s*env\s*|\s*upper\s*}}/${SF_ENV^^}/g" "$RENDERED"
+          sed -i "s/{{\s*env\s*}}/${SF_ENV}/g"               "$RENDERED"
+          sed -i "s|{{ rsa_public_key }}|${{ secrets.SNOWFLAKE_PYSPARK_RSA_PUBLIC_KEY }}|g" "$RENDERED"
+          snow sql -f "$RENDERED"
+          rm -f "$RENDERED"
+
+      # Clean up key material from the runner
+      - name: Clean up key files
+        if: always()
+        run: rm -f /tmp/admin_rsa_key.p8
