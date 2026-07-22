@@ -10,9 +10,14 @@ Provisions all Snowflake infrastructure needed to run the Snowpipe Streaming SDK
 
 | Object | Name (DEV) | Name (PROD) |
 |---|---|---|
-| Role | `SNOWPIPE_STREAMING_INGEST_ROLE_DEV` | `SNOWPIPE_STREAMING_INGEST_ROLE_PROD` |
+| Ingest Role | `STREAMING_INGEST_ROLE_DEV` | `STREAMING_INGEST_ROLE_PROD` |
+| Transform Role | `STREAMING_TRANSFORM_ROLE_DEV` | `STREAMING_TRANSFORM_ROLE_PROD` |
+| Developer Role | `STREAMING_DEVELOPER_ROLE_DEV` | `STREAMING_DEVELOPER_ROLE_PROD` |
 | Database | `STREAMING_DB_DEV` | `STREAMING_DB_PROD` |
-| Schema | `STREAMING_DB_DEV.RAW` | `STREAMING_DB_PROD.RAW` |
+| Schema (RAW) | `STREAMING_DB_DEV.RAW` | `STREAMING_DB_PROD.RAW` |
+| Schema (STG) | `STREAMING_DB_DEV.STG` | `STREAMING_DB_PROD.STG` |
+| Schema (INT) | `STREAMING_DB_DEV.INT` | `STREAMING_DB_PROD.INT` |
+| Schema (MART) | `STREAMING_DB_DEV.MART` | `STREAMING_DB_PROD.MART` |
 | Table | `STREAMING_DB_DEV.RAW.STREAM_T1` | `STREAMING_DB_PROD.RAW.STREAM_T1` |
 | Warehouse | `STREAMING_PIPE_WH_DEV` | `STREAMING_PIPE_WH_PROD` |
 | Service User | `PYSPARK_USER_DEV` | `PYSPARK_USER_PROD` |
@@ -33,9 +38,46 @@ sql/
   05_grants.sql             # INSERT and PIPE grants
   06_users.sql              # PySpark service user
   07_rsa_key.sql            # RSA public key assignment (injected from secrets)
+  08_developer_roles.sql    # Developer read role for STG/MART/RAW
 scripts/
   deploy.ps1                # Local deployment script (Windows/PowerShell)
 ```
+
+---
+
+## Naming conventions
+
+### Schemas
+
+| Schema | Purpose | Object types |
+|---|---|---|
+| `RAW` | Raw Snowpipe Streaming ingest — no transforms | Tables |
+| `STG` | Light transforms on RAW — rename, cast, deduplicate | Views (no stored data) |
+| `INT` | Intermediate joins and business logic — building blocks for MART | Tables (materialized) |
+| `MART` | Modeled/aggregated layer for consumers | Tables |
+
+### Object names
+
+Given source table `RAW.STREAM_T1`:
+
+| Layer | Pattern | Example |
+|---|---|---|
+| RAW | `<stream_name>` | `STREAM_T1` |
+| STG | `STG_<source>__<object>` | `STG_STREAM__T1` |
+| INT | `INT_<subject>__<verb>` | `INT_STREAM_EVENTS__JOINED` |
+| MART facts | `FCT_<business_process>` | `FCT_STREAM_EVENTS` |
+| MART dims | `DIM_<entity>` | `DIM_DEVICE` |
+
+> The double underscore in STG names (`__`) is the dbt convention for separating source system from object name.
+
+### Roles
+
+| Role | Purpose |
+|---|---|
+| `STREAMING_INGEST_ROLE_<ENV>` | Owns RAW schema — used by PySpark streaming service user only |
+| `STREAMING_TRANSFORM_ROLE_<ENV>` | Owns STG/INT/MART — used by transformation tools (dbt, etc.) |
+| `STREAMING_DEVELOPER_ROLE_<ENV>` | Human developer role — SELECT on all schemas |
+| `CICD_DEPLOY_USER` (via SYSADMIN) | CI/CD deployment — provisions infrastructure only |
 
 ---
 
