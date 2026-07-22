@@ -1,9 +1,8 @@
 -- =============================================================
 -- 02_database_schema.sql
--- Creates the database and all schemas. SYSADMIN retains database
--- ownership; schema ownership is split by responsibility:
---   RAW  → STREAMING_INGEST_ROLE
---   STG/INT/MART → STREAMING_TRANSFORM_ROLE
+-- Creates the database and all schemas. SYSADMIN owns everything.
+-- Service roles receive only the privileges they need to operate
+-- (principle of least privilege — no ownership for service accounts).
 -- Run as: SYSADMIN
 -- =============================================================
 
@@ -23,23 +22,43 @@ CREATE SCHEMA IF NOT EXISTS STREAMING_DB_{{ env | upper }}.INT;
 -- MART: modeled/aggregated layer for consumers (facts and dims)
 CREATE SCHEMA IF NOT EXISTS STREAMING_DB_{{ env | upper }}.MART;
 
--- Both service roles need USAGE on the database
+-- Ingest role: navigate to database and RAW schema only
 GRANT USAGE ON DATABASE STREAMING_DB_{{ env | upper }}
     TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
 
+GRANT USAGE ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
+    TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
+
+-- Transform role: navigate to database + read RAW + create objects in STG/INT/MART
 GRANT USAGE ON DATABASE STREAMING_DB_{{ env | upper }}
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
--- RAW owned by ingest role
-GRANT OWNERSHIP ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
-    TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
-
--- STG, INT, MART owned by transform role
-GRANT OWNERSHIP ON SCHEMA STREAMING_DB_{{ env | upper }}.STG
+GRANT USAGE  ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
-GRANT OWNERSHIP ON SCHEMA STREAMING_DB_{{ env | upper }}.INT
+GRANT SELECT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
-GRANT OWNERSHIP ON SCHEMA STREAMING_DB_{{ env | upper }}.MART
+GRANT SELECT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT USAGE       ON SCHEMA STREAMING_DB_{{ env | upper }}.STG
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT CREATE VIEW  ON SCHEMA STREAMING_DB_{{ env | upper }}.STG
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT CREATE TABLE ON SCHEMA STREAMING_DB_{{ env | upper }}.STG
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT USAGE       ON SCHEMA STREAMING_DB_{{ env | upper }}.INT
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT CREATE TABLE ON SCHEMA STREAMING_DB_{{ env | upper }}.INT
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT USAGE       ON SCHEMA STREAMING_DB_{{ env | upper }}.MART
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT CREATE TABLE ON SCHEMA STREAMING_DB_{{ env | upper }}.MART
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};

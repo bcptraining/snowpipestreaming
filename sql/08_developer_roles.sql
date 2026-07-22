@@ -18,17 +18,16 @@ CREATE ROLE IF NOT EXISTS STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
 GRANT ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }} TO ROLE SYSADMIN;
 
--- Database and warehouse (SYSADMIN owns these)
+-- Database and warehouse (SYSADMIN owns all objects)
 USE ROLE SYSADMIN;
+
 GRANT USAGE ON DATABASE  STREAMING_DB_{{ env | upper }}
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
 GRANT USAGE ON WAREHOUSE STREAMING_PIPE_WH_{{ env | upper }}
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
--- RAW: read access — granted by STREAMING_INGEST_ROLE (RAW owner)
-USE ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
-
+-- RAW: read access
 GRANT USAGE  ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
@@ -38,18 +37,23 @@ GRANT SELECT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
 GRANT SELECT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
--- STG, INT, MART: read access — granted by STREAMING_TRANSFORM_ROLE (owner)
-USE ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
-
+-- STG: read access
 GRANT USAGE  ON SCHEMA STREAMING_DB_{{ env | upper }}.STG
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
-GRANT SELECT ON ALL VIEWS  IN SCHEMA STREAMING_DB_{{ env | upper }}.STG
+GRANT SELECT ON ALL VIEWS IN SCHEMA STREAMING_DB_{{ env | upper }}.STG
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
 GRANT SELECT ON FUTURE VIEWS IN SCHEMA STREAMING_DB_{{ env | upper }}.STG
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
+GRANT SELECT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.STG
+    TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
+
+GRANT SELECT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.STG
+    TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
+
+-- INT: read access
 GRANT USAGE  ON SCHEMA STREAMING_DB_{{ env | upper }}.INT
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 

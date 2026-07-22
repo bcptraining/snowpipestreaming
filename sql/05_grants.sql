@@ -1,26 +1,18 @@
 -- =============================================================
 -- 05_grants.sql
--- 1. Grants INSERT and PIPE privileges to STREAMING_INGEST_ROLE.
--- 2. Grants RAW read access to STREAMING_TRANSFORM_ROLE so STG
---    views can read from RAW tables.
--- Run as: STREAMING_INGEST_ROLE_<ENV> (RAW owner)
+-- Grants operational privileges to the ingest role.
+-- SYSADMIN owns all objects so all grants are issued centrally.
+-- Run as: SYSADMIN
 -- =============================================================
 
-USE ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
+USE ROLE SYSADMIN;
 
--- Streaming ingest privileges
-GRANT INSERT ON TABLE STREAMING_DB_{{ env | upper }}.RAW.STREAM_T1
+-- Ingest role: insert data and manage streaming pipe channels
+GRANT INSERT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
+    TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
+
+GRANT INSERT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
 
 GRANT CREATE PIPE ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
-
--- Allow transform role to read RAW (required to build STG views)
-GRANT USAGE ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
-    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
-
-GRANT SELECT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
-    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
-
-GRANT SELECT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
-    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
