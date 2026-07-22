@@ -67,11 +67,23 @@ GRANT ROLE SECURITYADMIN TO USER CICD_DEPLOY_USER;
 GRANT ROLE USERADMIN     TO USER CICD_DEPLOY_USER;"
 
 # 3. Generate a dedicated RSA key pair for CICD_DEPLOY_USER
+
+# Windows (PowerShell):
 openssl genrsa 2048 | openssl pkcs8 -topk8 -nocrypt -out cicd_rsa_key.p8
 openssl rsa -in cicd_rsa_key.p8 -pubout -out cicd_rsa_key.pub
 
+# macOS/Linux (bash):
+# openssl genrsa 2048 | openssl pkcs8 -topk8 -nocrypt -out cicd_rsa_key.p8
+# openssl rsa -in cicd_rsa_key.p8 -pubout -out cicd_rsa_key.pub
+
 # 4. Set the public key on the user
+
+# Windows (PowerShell):
 $cicdPubk = (Get-Content cicd_rsa_key.pub | Select-Object -Skip 1 | Select-Object -SkipLast 1) -join ""
+
+# macOS/Linux (bash):
+# cicdPubk=$(grep -v "KEY-" cicd_rsa_key.pub | tr -d '\n')
+
 snowsql -q "ALTER USER CICD_DEPLOY_USER SET RSA_PUBLIC_KEY='$cicdPubk';"
 ```
 
@@ -79,12 +91,22 @@ snowsql -q "ALTER USER CICD_DEPLOY_USER SET RSA_PUBLIC_KEY='$cicdPubk';"
 
 ### Step 2 — Generate a key pair for the PySpark service user
 
+**Windows (PowerShell):**
 ```powershell
 openssl genrsa 2048 | openssl pkcs8 -topk8 -nocrypt -out pyspark_user_rsa_key.p8
 openssl rsa -in pyspark_user_rsa_key.p8 -pubout -out pyspark_user_rsa_key.pub
 
 # Get the stripped public key value (no headers) — you'll need this for GitHub Secrets
 (Get-Content pyspark_user_rsa_key.pub | Select-Object -Skip 1 | Select-Object -SkipLast 1) -join ""
+```
+
+**macOS/Linux (bash):**
+```bash
+openssl genrsa 2048 | openssl pkcs8 -topk8 -nocrypt -out pyspark_user_rsa_key.p8
+openssl rsa -in pyspark_user_rsa_key.p8 -pubout -out pyspark_user_rsa_key.pub
+
+# Get the stripped public key value (no headers)
+grep -v "KEY-" pyspark_user_rsa_key.pub | tr -d '\n'
 ```
 
 ### Step 3 — Configure the Snowflake CLI local connection
