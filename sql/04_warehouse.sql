@@ -1,6 +1,7 @@
 -- =============================================================
 -- 04_warehouse.sql
--- Creates the virtual warehouse and transfers ownership.
+-- Creates the virtual warehouse. SYSADMIN retains ownership;
+-- USAGE is granted to both service roles.
 -- Run as: SYSADMIN
 -- =============================================================
 
@@ -11,5 +12,8 @@ CREATE WAREHOUSE IF NOT EXISTS STREAMING_PIPE_WH_{{ env | upper }}
     AUTO_SUSPEND   = 60
     AUTO_RESUME    = TRUE;
 
-GRANT OWNERSHIP ON WAREHOUSE STREAMING_PIPE_WH_{{ env | upper }}
-    TO ROLE SNOWPIPE_STREAMING_INGEST_ROLE_{{ env | upper }};
+GRANT USAGE ON WAREHOUSE STREAMING_PIPE_WH_{{ env | upper }}
+    TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
+
+GRANT USAGE ON WAREHOUSE STREAMING_PIPE_WH_{{ env | upper }}
+    TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};

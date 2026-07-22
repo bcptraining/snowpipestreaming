@@ -50,7 +50,7 @@ try {
             $content = $content -replace '\{\{\s*rsa_public_key\s*\}\}', $RsaPublicKey
         }
 
-        $content + "`n" | Add-Content -Path $TempFile -NoNewline
+        $content + "`n" | Add-Content -Path $TempFile -NoNewline -Encoding UTF8
     }
 
     Write-Host "`nExecuting batch [env=$($Env.ToUpper())]..." -ForegroundColor Cyan

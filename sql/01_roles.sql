@@ -1,15 +1,27 @@
 -- =============================================================
 -- 01_roles.sql
--- Creates the ingestion role and transfers ownership to SYSADMIN.
+-- Creates service roles and transfers ownership to SYSADMIN.
+--
+-- STREAMING_INGEST_ROLE  : owns RAW schema; used by PySpark
+-- STREAMING_TRANSFORM_ROLE: owns STG/INT/MART; used by transforms
+--
 -- Run as: SECURITYADMIN
 -- =============================================================
 
 USE ROLE SECURITYADMIN;
 
-CREATE ROLE IF NOT EXISTS SNOWPIPE_STREAMING_INGEST_ROLE_{{ env | upper }};
+-- Ingest role: owns RAW, used by the PySpark streaming service user
+CREATE ROLE IF NOT EXISTS STREAMING_INGEST_ROLE_{{ env | upper }};
 
-GRANT OWNERSHIP ON ROLE SNOWPIPE_STREAMING_INGEST_ROLE_{{ env | upper }}
+GRANT OWNERSHIP ON ROLE STREAMING_INGEST_ROLE_{{ env | upper }}
     TO ROLE SYSADMIN;
 
--- Grant the role to SYSADMIN so CI/CD (which runs as SYSADMIN) can USE it
-GRANT ROLE SNOWPIPE_STREAMING_INGEST_ROLE_{{ env | upper }} TO ROLE SYSADMIN;
+GRANT ROLE STREAMING_INGEST_ROLE_{{ env | upper }} TO ROLE SYSADMIN;
+
+-- Transform role: owns STG, INT, MART; reads from RAW
+CREATE ROLE IF NOT EXISTS STREAMING_TRANSFORM_ROLE_{{ env | upper }};
+
+GRANT OWNERSHIP ON ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }}
+    TO ROLE SYSADMIN;
+
+GRANT ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }} TO ROLE SYSADMIN;
