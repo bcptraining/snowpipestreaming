@@ -53,7 +53,7 @@ jobs:
           [connections.default]
           account       = "${{ secrets.SNOWFLAKE_ACCOUNT }}"
           user          = "${{ secrets.SNOWFLAKE_ADMIN_USER }}"
-          authenticator = "private_key"
+          authenticator = "snowflake_jwt"
           private_key_path = "/tmp/admin_rsa_key.p8"
           EOF
           chmod 600 ~/.snowflake/config.toml
