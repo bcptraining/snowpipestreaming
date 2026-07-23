@@ -31,8 +31,13 @@ try {
         Write-Warning "SNOWFLAKE_RSA_PUBLIC_KEY is not set. Step 07 (RSA key) will be skipped."
     }
 
-    # Gather and optionally filter files
-    $files = Get-ChildItem -Path $SqlDir -Filter '0*.sql' | Sort-Object Name
+    # Gather main SQL files in numbered order, then table definition files
+    $mainFiles  = Get-ChildItem -Path $SqlDir -Filter '0*.sql' | Sort-Object Name
+    $tableFiles = Get-ChildItem -Path (Join-Path $SqlDir 'tables') -Filter '*.sql' `
+                    -ErrorAction SilentlyContinue | Sort-Object Name
+
+    $files = @($mainFiles) + @($tableFiles)
+
     if (-not $RsaPublicKey) {
         $files = $files | Where-Object { $_.Name -ne '07_rsa_key.sql' }
     }
@@ -54,6 +59,9 @@ try {
     }
 
     Write-Host "`nExecuting batch [env=$($Env.ToUpper())]..." -ForegroundColor Cyan
+    # PYTHONUTF8=1 forces the Snowflake CLI (Python) to read the temp file
+    # as UTF-8 rather than the Windows default charmap (cp1252).
+    $env:PYTHONUTF8 = '1'
     snow sql -f $TempFile --connection $Connection
 
     if ($LASTEXITCODE -ne 0) {
