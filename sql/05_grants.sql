@@ -1,4 +1,4 @@
--- =============================================================
+﻿-- =============================================================
 -- 05_grants.sql
 -- Grants operational privileges to the ingest role.
 -- Run as: STREAMING_OBJECT_OWNER_ROLE_<ENV> (owns all objects)
@@ -7,7 +7,7 @@
 USE ROLE STREAMING_OBJECT_OWNER_ROLE_{{ env | upper }};
 
 -- Ingest role: insert data and manage streaming pipe channels.
--- ALL/FUTURE TABLES is intentional — RAW is exclusively the Snowpipe
+-- ALL/FUTURE TABLES is intentional -- RAW is exclusively the Snowpipe
 -- Streaming landing zone. Every table here is an ingest target.
 -- If a table in RAW should NOT be writable by this role, it belongs
 -- in a separate schema, not RAW.

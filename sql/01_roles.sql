@@ -1,16 +1,16 @@
--- =============================================================
+﻿-- =============================================================
 -- 01_roles.sql
 -- Creates all service roles for the Snowpipe Streaming solution.
 --
 -- Role hierarchy (Snowflake best practice):
 --
 --   SYSADMIN
---   └── STREAMING_ADMIN_ROLE_<ENV>          ← solution umbrella (grant this to new admins)
---       ├── STREAMING_OBJECT_OWNER_ROLE_<ENV>  owns DB/schemas/warehouse; issues grants
---       ├── STREAMING_INGEST_ROLE_<ENV>        INSERT on RAW; used by PySpark service user
---       ├── STREAMING_TRANSFORM_ROLE_<ENV>     CREATE on STG/INT/MART; used by transforms
---       ├── STREAMING_API_ROLE_<ENV>           SELECT on MART; used by API service accounts
---       └── STREAMING_DEVELOPER_ROLE_<ENV>     SELECT on all schemas; human developers
+--   '-- STREAMING_ADMIN_ROLE_<ENV>          ← solution umbrella (grant this to new admins)
+--       +-- STREAMING_OBJECT_OWNER_ROLE_<ENV>  owns DB/schemas/warehouse; issues grants
+--       +-- STREAMING_INGEST_ROLE_<ENV>        INSERT on RAW; used by PySpark service user
+--       +-- STREAMING_TRANSFORM_ROLE_<ENV>     CREATE on STG/INT/MART; used by transforms
+--       +-- STREAMING_API_ROLE_<ENV>           SELECT on MART; used by API service accounts
+--       '-- STREAMING_DEVELOPER_ROLE_<ENV>     SELECT on all schemas; human developers
 --
 -- Run as: SECURITYADMIN
 -- =============================================================
@@ -18,7 +18,7 @@
 USE ROLE SECURITYADMIN;
 
 -- Admin role: top-level umbrella for this solution.
--- Inherits all child roles — grant this single role to anyone who needs
+-- Inherits all child roles -- grant this single role to anyone who needs
 -- full access to manage or operate the streaming pipeline.
 -- All child roles roll up here rather than directly to SYSADMIN.
 CREATE ROLE IF NOT EXISTS STREAMING_ADMIN_ROLE_{{ env | upper }}
@@ -34,7 +34,7 @@ GRANT ROLE STREAMING_ADMIN_ROLE_{{ env | upper }} TO ROLE SYSADMIN;
 -- SYSADMIN still creates the DB/warehouse (requires account-level privileges)
 -- but immediately transfers ownership here.
 CREATE ROLE IF NOT EXISTS STREAMING_OBJECT_OWNER_ROLE_{{ env | upper }}
-    COMMENT = 'Owns STREAMING_DB_{{ env | upper }} database, all schemas, and warehouse. Issues all privilege grants. Used by CI/CD only — never grant to human users.';
+    COMMENT = 'Owns STREAMING_DB_{{ env | upper }} database, all schemas, and warehouse. Issues all privilege grants. Used by CI/CD only -- never grant to human users.';
 
 GRANT OWNERSHIP ON ROLE STREAMING_OBJECT_OWNER_ROLE_{{ env | upper }}
     TO ROLE SYSADMIN;
@@ -56,9 +56,9 @@ GRANT ROLE STREAMING_INGEST_ROLE_{{ env | upper }}
 -- POLICY: In DEV, this role may be granted to individual developer personal accounts
 --         to allow direct iteration on STG/INT/MART objects.
 --         In PROD (and any higher environment), this role must NEVER be granted
---         to a human user — all changes must flow through CI/CD only.
+--         to a human user -- all changes must flow through CI/CD only.
 CREATE ROLE IF NOT EXISTS STREAMING_TRANSFORM_ROLE_{{ env | upper }}
-    COMMENT = 'CREATE TABLE/VIEW/DYNAMIC TABLE/STREAM on STG/INT/MART + READ on RAW. DEV: may be granted to developer personal accounts for iteration. PROD: CI/CD pipeline only — do not grant to human users.';
+    COMMENT = 'CREATE TABLE/VIEW/DYNAMIC TABLE/STREAM on STG/INT/MART + READ on RAW. DEV: may be granted to developer personal accounts for iteration. PROD: CI/CD pipeline only -- do not grant to human users.';
 
 GRANT OWNERSHIP ON ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }}
     TO ROLE SYSADMIN;

@@ -1,4 +1,4 @@
--- =============================================================
+﻿-- =============================================================
 -- 02_database_schema.sql
 -- SYSADMIN creates the database and schemas (requires account-level
 -- CREATE DATABASE privilege). SECURITYADMIN then transfers ownership
@@ -11,13 +11,13 @@ USE ROLE SYSADMIN;
 
 CREATE DATABASE IF NOT EXISTS STREAMING_DB_{{ env | upper }};
 
--- RAW: landing zone for Snowpipe Streaming ingest — no transforms
+-- RAW: landing zone for Snowpipe Streaming ingest -- no transforms
 CREATE SCHEMA IF NOT EXISTS STREAMING_DB_{{ env | upper }}.RAW;
 
 -- STG: light transforms on top of RAW (views only, no stored data)
 CREATE SCHEMA IF NOT EXISTS STREAMING_DB_{{ env | upper }}.STG;
 
--- INT: intermediate joins and business logic — building blocks for MART (tables)
+-- INT: intermediate joins and business logic -- building blocks for MART (tables)
 CREATE SCHEMA IF NOT EXISTS STREAMING_DB_{{ env | upper }}.INT;
 
 -- MART: modeled/aggregated layer for consumers (facts and dims)
@@ -51,15 +51,15 @@ GRANT USAGE ON DATABASE STREAMING_DB_{{ env | upper }}
 GRANT USAGE ON DATABASE STREAMING_DB_{{ env | upper }}
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
--- RAW owned by ingest role
-GRANT OWNERSHIP ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
+-- Ingest role: USAGE on RAW schema only (STREAMING_OBJECT_OWNER_ROLE retains ownership)
+GRANT USAGE ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
 
--- STG, INT, MART owned by transform role
-GRANT OWNERSHIP ON SCHEMA STREAMING_DB_{{ env | upper }}.STG
+-- Transform role: USAGE on RAW (read source data) + USAGE on STG/INT/MART (create objects)
+GRANT USAGE ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
-GRANT OWNERSHIP ON SCHEMA STREAMING_DB_{{ env | upper }}.INT
+GRANT SELECT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
 GRANT SELECT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
@@ -118,7 +118,7 @@ GRANT CREATE DYNAMIC TABLE   ON SCHEMA STREAMING_DB_{{ env | upper }}.MART
 GRANT CREATE MATERIALIZED VIEW ON SCHEMA STREAMING_DB_{{ env | upper }}.MART
     TO ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
--- API role: read-only access to MART only — no visibility into RAW/STG/INT
+-- API role: read-only access to MART only -- no visibility into RAW/STG/INT
 GRANT USAGE ON DATABASE STREAMING_DB_{{ env | upper }}
     TO ROLE STREAMING_API_ROLE_{{ env | upper }};
 

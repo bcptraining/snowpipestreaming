@@ -59,6 +59,9 @@ try {
     }
 
     Write-Host "`nExecuting batch [env=$($Env.ToUpper())]..." -ForegroundColor Cyan
+    # PYTHONUTF8=1 forces the Snowflake CLI (Python) to read the temp file
+    # as UTF-8 rather than the Windows default charmap (cp1252).
+    $env:PYTHONUTF8 = '1'
     snow sql -f $TempFile --connection $Connection
 
     if ($LASTEXITCODE -ne 0) {

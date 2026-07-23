@@ -1,4 +1,4 @@
--- =============================================================
+﻿-- =============================================================
 -- 08_developer_roles.sql
 -- Creates a developer role with read access to all schemas.
 -- Grants are issued by each schema's owner role.
@@ -15,7 +15,7 @@
 USE ROLE SECURITYADMIN;
 
 CREATE ROLE IF NOT EXISTS STREAMING_DEVELOPER_ROLE_{{ env | upper }}
-    COMMENT = 'SELECT on all schemas in STREAMING_DB_{{ env | upper }}. Assign to human developers in all environments. No write access — read-only for data exploration and debugging.';
+    COMMENT = 'SELECT on all schemas in STREAMING_DB_{{ env | upper }}. Assign to human developers in all environments. No write access -- read-only for data exploration and debugging.';
 
 GRANT ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }}
     TO ROLE STREAMING_ADMIN_ROLE_{{ env | upper }};
@@ -28,7 +28,7 @@ GRANT USAGE ON DATABASE  STREAMING_DB_{{ env | upper }}
 GRANT USAGE ON WAREHOUSE STREAMING_PIPE_WH_{{ env | upper }}
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
--- RAW: read access — granted by STREAMING_INGEST_ROLE (RAW owner)
+-- RAW: read access -- granted by STREAMING_INGEST_ROLE (RAW owner)
 USE ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
 
 GRANT USAGE  ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW
@@ -40,7 +40,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
 GRANT SELECT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
--- STG, INT, MART: read access — granted by STREAMING_TRANSFORM_ROLE (owner)
+-- STG, INT, MART: read access -- granted by STREAMING_TRANSFORM_ROLE (owner)
 USE ROLE STREAMING_TRANSFORM_ROLE_{{ env | upper }};
 
 GRANT USAGE  ON SCHEMA STREAMING_DB_{{ env | upper }}.STG
