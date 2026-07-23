@@ -1,4 +1,4 @@
-﻿-- =============================================================
+-- =============================================================
 -- 08_developer_roles.sql
 -- Creates a developer role with read access to all schemas.
 -- Grants are issued by each schema's owner role.

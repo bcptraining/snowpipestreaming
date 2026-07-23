@@ -1,4 +1,4 @@
-﻿-- =============================================================
+-- =============================================================
 -- 05_grants.sql
 -- Grants operational privileges to the ingest role.
 -- Run as: STREAMING_OBJECT_OWNER_ROLE_<ENV> (owns all objects)
