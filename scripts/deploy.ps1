@@ -21,8 +21,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$SqlDir   = Join-Path $PSScriptRoot '..\sql'
-$TempFile = [System.IO.Path]::GetTempFileName() -replace '\.tmp$', '.sql'
+$SqlDir    = Join-Path $PSScriptRoot '..\sql'
+$TempFile  = [System.IO.Path]::GetTempFileName() -replace '\.tmp$', '.sql'
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)  # BOM-free UTF-8
 
 try {
     # Collect RSA public key from env var — never hard-code it
@@ -55,7 +56,9 @@ try {
             $content = $content -replace '\{\{\s*rsa_public_key\s*\}\}', $RsaPublicKey
         }
 
-        $content + "`n" | Add-Content -Path $TempFile -NoNewline -Encoding UTF8
+        $content + "`n" | ForEach-Object {
+            [System.IO.File]::AppendAllText($TempFile, $_, $Utf8NoBom)
+        }
     }
 
     Write-Host "`nExecuting batch [env=$($Env.ToUpper())]..." -ForegroundColor Cyan
