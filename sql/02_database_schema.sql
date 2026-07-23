@@ -1,4 +1,4 @@
-﻿-- =============================================================
+-- =============================================================
 -- 02_database_schema.sql
 -- SYSADMIN creates the database and schemas (requires account-level
 -- CREATE DATABASE privilege). SECURITYADMIN then transfers ownership

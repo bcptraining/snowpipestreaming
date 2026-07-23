@@ -1,4 +1,4 @@
-﻿-- =============================================================
+-- =============================================================
 -- 03_tables.sql
 -- Table definitions have moved to sql/tables/.
 -- Each table is a separate file -- add new tables there.
