@@ -14,9 +14,11 @@
 
 USE ROLE SECURITYADMIN;
 
-CREATE ROLE IF NOT EXISTS STREAMING_DEVELOPER_ROLE_{{ env | upper }};
+CREATE ROLE IF NOT EXISTS STREAMING_DEVELOPER_ROLE_{{ env | upper }}
+    COMMENT = 'SELECT on all schemas in STREAMING_DB_{{ env | upper }}. Assign to human developers in all environments. No write access — read-only for data exploration and debugging.';
 
-GRANT ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }} TO ROLE SYSADMIN;
+GRANT ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }}
+    TO ROLE STREAMING_ADMIN_ROLE_{{ env | upper }};
 
 -- Database and warehouse (SYSADMIN owns these)
 USE ROLE SYSADMIN;
@@ -57,6 +59,12 @@ GRANT SELECT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.INT
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
 GRANT SELECT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.INT
+    TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
+
+GRANT SELECT ON ALL STREAMS IN SCHEMA STREAMING_DB_{{ env | upper }}.INT
+    TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
+
+GRANT SELECT ON FUTURE STREAMS IN SCHEMA STREAMING_DB_{{ env | upper }}.INT
     TO ROLE STREAMING_DEVELOPER_ROLE_{{ env | upper }};
 
 GRANT USAGE  ON SCHEMA STREAMING_DB_{{ env | upper }}.MART

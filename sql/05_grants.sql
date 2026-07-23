@@ -1,15 +1,20 @@
 -- =============================================================
 -- 05_grants.sql
--- 1. Grants INSERT and PIPE privileges to STREAMING_INGEST_ROLE.
--- 2. Grants RAW read access to STREAMING_TRANSFORM_ROLE so STG
---    views can read from RAW tables.
--- Run as: STREAMING_INGEST_ROLE_<ENV> (RAW owner)
+-- Grants operational privileges to the ingest role.
+-- Run as: STREAMING_OBJECT_OWNER_ROLE_<ENV> (owns all objects)
 -- =============================================================
 
-USE ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
+USE ROLE STREAMING_OBJECT_OWNER_ROLE_{{ env | upper }};
 
--- Streaming ingest privileges
-GRANT INSERT ON TABLE STREAMING_DB_{{ env | upper }}.RAW.STREAM_T1
+-- Ingest role: insert data and manage streaming pipe channels.
+-- ALL/FUTURE TABLES is intentional — RAW is exclusively the Snowpipe
+-- Streaming landing zone. Every table here is an ingest target.
+-- If a table in RAW should NOT be writable by this role, it belongs
+-- in a separate schema, not RAW.
+GRANT INSERT ON ALL TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
+    TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
+
+GRANT INSERT ON FUTURE TABLES IN SCHEMA STREAMING_DB_{{ env | upper }}.RAW
     TO ROLE STREAMING_INGEST_ROLE_{{ env | upper }};
 
 GRANT CREATE PIPE ON SCHEMA STREAMING_DB_{{ env | upper }}.RAW

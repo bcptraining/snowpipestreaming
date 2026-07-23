@@ -69,7 +69,11 @@ jobs:
       - name: Deploy all SQL
         run: |
           RENDERED=$(mktemp --suffix=.sql)
+          # Main numbered files first, then table definitions
           cat sql/0*.sql > "$RENDERED"
+          if ls sql/tables/*.sql 1>/dev/null 2>&1; then
+            cat sql/tables/*.sql >> "$RENDERED"
+          fi
           sed -i "s/{{\s*env\s*|\s*upper\s*}}/${SF_ENV^^}/g" "$RENDERED"
           sed -i "s/{{\s*env\s*}}/${SF_ENV}/g"               "$RENDERED"
           sed -i "s|{{ rsa_public_key }}|${{ secrets.SNOWFLAKE_PYSPARK_RSA_PUBLIC_KEY }}|g" "$RENDERED"
